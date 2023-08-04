@@ -1,7 +1,10 @@
 {
   "name": "network-b-frontend",
   "version": "0.1.0",
+  "description": "",
   "private": true,
+  "repository": "https://github.com/lyle-liao-fenrirdata/network-b-frontend.git",
+  "license": "MIT",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -9,17 +12,20 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@tailwindcss/forms": "^0.5.4",
     "@types/node": "20.4.7",
     "@types/react": "18.2.18",
     "@types/react-dom": "18.2.7",
-    "autoprefixer": "10.4.14",
+    "autoprefixer": "^10.4.14",
     "eslint": "8.46.0",
     "eslint-config-next": "13.4.12",
     "next": "13.4.12",
-    "postcss": "8.4.27",
+    "postcss": "^8.4.27",
+    "prettier": "^3.0.1",
+    "prettier-plugin-tailwindcss": "^0.4.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "tailwindcss": "3.3.3",
+    "tailwindcss": "^3.3.3",
     "typescript": "5.1.6"
   }
 }
