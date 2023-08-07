@@ -139,7 +139,7 @@ export const CEgressPageData = {
 const postCookie = {
     cookie: "JSESSION=DB92C69369E1B130D105B82699A05A8F"
 }
-const bodyForm = {
+export const bodyForm = {
     modemIp: '192.168.1.105',
     username: "sfuser",
     XXesh: "",
@@ -168,4 +168,22 @@ const bodyForm = {
     egressDestIp4: '10.0.0.105',
     egressDestPort4: "0",
     button: "Apply"
+}
+
+export const restfullAPI = {
+    "InputPort": 1,
+    "OutputPort": 1,
+    "LinkID": {
+        "SatelliteID": "AA",
+        "Polarization": "V",
+        "Frequency": 12500250000
+    },
+    "ServerIP": "192.168.016.101",
+    "ServerPort": 1234,
+    "ServerCh": 1,
+    "ServerType": "HDLC/DVB/IP",
+    "Timestamp": 1691396513, // UnixTime(seconds)
+    "Capture": "Enable/Disable",
+    "RecordId": "AAV12500250000",
+    "RecordSource": "B"
 }
