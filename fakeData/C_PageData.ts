@@ -1,4 +1,4 @@
-export const CsignalPageDataMux = {
+export const cSignalPageDataMux: CSignalPageDataMux = {
     error: false,
     functions: [
         {
@@ -72,7 +72,84 @@ export const CsignalPageDataMux = {
     ]
 }
 
-export const CEgressPageData = {
+export interface SignalTableRender {
+    argument: {
+        hiddenRefresh: string;
+        lBandFrequency: string;
+        modemIp: string;
+        sfBaudRate: string;
+        sfClusterVariance: string;
+        sfDerandomiserEnable: string;
+        sfDownConversionFactor: string;
+        sfFrequencyError: string;
+        sfInputLevel: string;
+        sfOffAirFrequency: string;
+        sfOutputMode: string;
+        sfPlsSignature: string;
+        sfPowerMode: string;
+        sfSystemRfid: string;
+        sfdbChannelPoolName: string;
+        sfdbSubChannelCaseNotation: string;
+        sfdbSubChannelInUse: string;
+        username: string;
+    };
+    name: "signalTableRender";
+}
+
+export interface SpectrumRefresh {
+    argument: {
+        averageInputSpectrum: {
+            bandwidth: number;
+            center: number;
+        };
+        averageSignalSpectrum: {
+            bandwidth: number;
+            center: number;
+        };
+        peakHoldInputSpectrum: {
+            bandwidth: number;
+            center: number;
+        };
+        peakHoldSignalSpectrum: {
+            bandwidth: number;
+            center: number;
+        };
+    };
+    name: "spectrumRefresh";
+}
+
+export interface RenderMeaderBar {
+    argument: {
+        baudrate: string;
+        bitRate: string;
+        caseNotation: string;
+        demodImg: string;
+        egressImg: string;
+        fecImg: string;
+        frequency: string;
+        hostname: string;
+        inputPower: string;
+        rwStatus: string;
+        snr: string;
+        writeUser: string;
+    };
+    name: "renderMeaderBar";
+}
+
+export interface CheckloadedStuff {
+    argument: {
+        loadedDeframerName: string;
+        loadedSignalType: string;
+    };
+    name: "checkloadedStuff";
+}
+
+export interface CSignalPageDataMux {
+    error: boolean;
+    functions: (SignalTableRender | SpectrumRefresh | RenderMeaderBar | CheckloadedStuff)[];
+}
+
+export const cEgressPageData: CEgressPageData = {
     error: false,
     writeEnabled: true,
     header: {
@@ -133,57 +210,119 @@ export const CEgressPageData = {
     ]
 }
 
+export interface CEgressPageData {
+    error: boolean;
+    writeEnabled: boolean;
+    header: {
+        hostname: string;
+        rwStatus: string;
+        writeUser: string;
+        caseNotation: string;
+        inputPower: string;
+        snr: string;
+        frequency: string;
+        baudrate: string;
+        bitRate: string;
+        demodImg: string;
+        fecImg: string;
+        egressImg: string;
+    };
+    table: {
+        status: string;
+        enabled: string;
+        protocol: string;
+        encapsulation: string;
+        mode: string;
+        ip: string;
+        port: string;
+        componentId: string;
+    }[];
+}
+
 // POST http://192.168.1.80:8080/tropical_cyclone_v8.0.5/egress/CEgressPageHandler
 // return 302
 // location http://192.168.1.80:8080/tropical_cyclone_v8.0.5/egress/egressPage.jsp?modemIp=192.168.1.105&username=sfuser&date=1686624786951
 const postCookie = {
     cookie: "JSESSION=DB92C69369E1B130D105B82699A05A8F"
 }
-export const bodyForm = {
-    modemIp: '192.168.1.105',
-    username: "sfuser",
-    XXesh: "",
-    egressEnabled1: "0",
-    egressProtocal1: "0",
-    egressEncapsulation1: "0",
-    egressServerMode1: "0",
-    egressDestIp1: '192.168.1.84',
-    egressDestPort1: "15101",
-    egressEnabled2: "1",
-    egressProtocal2: "0",
-    egressEncapsulation2: "4",
-    egressServerMode2: "0",
-    egressDestIp2: '192.168.1.208',
-    egressDestPort2: "31101",
-    egressEnabled3: "1",
-    egressProtocal3: "0",
-    egressEncapsulation3: "4",
-    egressServerMode3: "0",
-    egressDestIp3: '192.168.1.200',
-    egressDestPort3: "31101",
-    egressEnabled4: "1",
-    egressProtocal4: "0",
-    egressEncapsulation4: "0",
-    egressServerMode4: "0",
-    egressDestIp4: '10.0.0.105',
-    egressDestPort4: "0",
-    button: "Apply"
+
+// export const bodyForm: BodyForm = {
+//     modemIp: '192.168.1.105',
+//     username: "sfuser",
+//     XXesh: "",
+//     egressEnabled1: "0",
+//     egressProtocal1: "0",
+//     egressEncapsulation1: "0",
+//     egressServerMode1: "0",
+//     egressDestIp1: '192.168.1.84',
+//     egressDestPort1: "15101",
+//     egressEnabled2: "1",
+//     egressProtocal2: "0",
+//     egressEncapsulation2: "4",
+//     egressServerMode2: "0",
+//     egressDestIp2: '192.168.1.208',
+//     egressDestPort2: "31101",
+//     egressEnabled3: "1",
+//     egressProtocal3: "0",
+//     egressEncapsulation3: "4",
+//     egressServerMode3: "0",
+//     egressDestIp3: '192.168.1.200',
+//     egressDestPort3: "31101",
+//     egressEnabled4: "1",
+//     egressProtocal4: "0",
+//     egressEncapsulation4: "0",
+//     egressServerMode4: "0",
+//     egressDestIp4: '10.0.0.105',
+//     egressDestPort4: "0",
+//     button: "Apply"
+// }
+
+// {
+//     "ModemModel": "MDM9000"   #Modem 的型號 ==> "networkB"
+//     "Timestamp": "UnixTime", #Unix
+//     "RecordID ": "CCV1250025000 "  #RecordID
+//     "ServerType": "HDLC/DVB/IP", #側錄服務器, 側錄類型 HDLC / DVB / IP ==> Signal Type
+//     "Capture": "Enable/Disable" ==> ( Enable / Disable)
+//     "ModemDataIP": "192.168.016.192" #解調器IP ==> Server Ip
+//     "ModemDataDestPort": 6001    #解調器串流目的 port ==> Server Port
+// }
+
+export const restfullAPI: RestfullAPI = {
+    // "LinkID": {
+    //     "SatelliteID": "AA",
+    //     "Polarization": "V",
+    //     "Frequency": 11669000000
+    // },
+    // "InputPort": 1,
+    // "OutputPort": 1,
+    // "ServerIP": "192.168.016.51",
+    // "ServerPort": 5001,
+    // "ServerCh": 1,
+    "ServerType": "IP",
+    "Timestamp": "UnixTime",
+    "Capture": "Disable",
+    "RecordID": "Testxxx000000",
+    "ModemDataIP": "192.168.016.192",
+    "ModemDataDestPort": 6001,
+    "ModemModel": "MDM9000",
 }
 
-export const restfullAPI = {
-    "InputPort": 1,
-    "OutputPort": 1,
-    "LinkID": {
-        "SatelliteID": "AA",
-        "Polarization": "V",
-        "Frequency": 12500250000
-    },
-    "ServerIP": "192.168.016.101",
-    "ServerPort": 1234,
-    "ServerCh": 1,
-    "ServerType": "HDLC/DVB/IP",
-    "Timestamp": 1691396513, // UnixTime(seconds)
-    "Capture": "Enable/Disable",
-    "RecordId": "AAV12500250000",
-    "RecordSource": "B"
+export interface RestfullAPI {
+    // LinkID: {
+    //     SatelliteID: string;
+    //     Polarization: string;
+    //     Frequency: number;
+    // };
+    RecordID: string;
+    // InputPort: number;
+    // OutputPort: number;
+    // ServerIP: string;
+    // ServerPort: number;
+    // ServerCh: number;
+    ServerType: string;
+    Timestamp: string;
+    Capture: string;
+    ModemDataIP: string;
+    ModemDataDestPort: number;
+    ModemModel: string;
 }
