@@ -48,7 +48,8 @@ export default function handler(
           "button",
         ];
         if (requireKeys.every((r) => Object.hasOwn(data, r))) {
-          res.status(302).end();
+          // res.status(302).end();
+          res.status(200).end();
           break;
         }
         res.status(406).end();

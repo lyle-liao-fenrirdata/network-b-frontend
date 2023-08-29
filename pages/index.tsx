@@ -1,6 +1,6 @@
 export default function Home() {
   return (
-    <section className="header max-h-860-px relative flex h-screen items-center pt-16">
+    <section className="header max-h-860-px relative flex h-screen items-center">
       <div className="container mx-auto flex flex-wrap items-center">
         <div className="w-full px-4 md:w-8/12 lg:w-6/12 xl:w-6/12">
           <div className="pt-32 sm:pt-0">
@@ -22,7 +22,7 @@ export default function Home() {
       </div>
       {/* eslint-disable @next/next/no-img-element */}
       <img
-        className="b-auto max-h-860-px absolute right-0 top-0 -mt-48 w-10/12 pt-16 sm:mt-0 sm:w-6/12"
+        className="b-auto max-h-860-px absolute right-0 top-0 -mt-48 w-10/12 sm:mt-0 sm:w-6/12"
         src="/img/pattern_nextjs.png"
         alt="..."
       />

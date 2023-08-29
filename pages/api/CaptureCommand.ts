@@ -12,12 +12,12 @@ export default function handler(
       try {
         const data = JSON.parse(body);
         const requireKeys = [
-          "LinkID",
-          "InputPort",
-          "OutputPort",
-          "ServerIP",
-          "ServerPort",
-          "ServerCh",
+          // "LinkID",
+          // "InputPort",
+          // "OutputPort",
+          // "ServerIP",
+          // "ServerPort",
+          // "ServerCh",
           "Capture",
           "RecordID",
           "ServerType",
@@ -25,8 +25,8 @@ export default function handler(
           "ModemDataIP",
           "ModemDataDestPort"
         ];
-        const requireKeysOfLinkID = ["SatelliteID", "Polarization", "Frequency"]
-        if (requireKeys.every((r) => Object.hasOwn(data, r)) && requireKeysOfLinkID.every((r) => Object.hasOwn(data.LinkID, r))) {
+        // const requireKeysOfLinkID = ["SatelliteID", "Polarization", "Frequency"]
+        if (requireKeys.every((r) => Object.hasOwn(data, r))) {
           res.status(200).end("ok");
           break;
         }

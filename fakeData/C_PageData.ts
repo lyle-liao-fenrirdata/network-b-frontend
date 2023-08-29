@@ -303,7 +303,7 @@ export const restfullAPI: RestfullAPI = {
     "Capture": "Disable",
     "RecordID": "Testxxx000000",
     "ModemDataIP": "192.168.016.192",
-    "ModemDataDestPort": 6001,
+    "ModemDataDestPort": "6001",
     "ModemModel": "MDM9000",
 }
 
@@ -323,6 +323,6 @@ export interface RestfullAPI {
     Timestamp: string;
     Capture: string;
     ModemDataIP: string;
-    ModemDataDestPort: number;
+    ModemDataDestPort: string;
     ModemModel: string;
 }

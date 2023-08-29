@@ -1,3 +1,10 @@
+import ChartContainer from "@/components/ChartContainer";
+import Modal from "@/components/Modal";
+import EgressChannelTable from "@/components/app/EgressChannelTable";
+import EgressStatus from "@/components/app/EgressStatus";
+import ModalExt from "@/components/app/ModalExt";
+import SignalConfiguration from "@/components/app/SignalConfiguration";
+import SignalType from "@/components/app/SignalType";
 import {
   CEgressPageData,
   CSignalPageDataMux,
@@ -5,83 +12,22 @@ import {
   RestfullAPI,
   SignalTableRender,
 } from "@/fakeData/C_PageData";
-import { ReactElement, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
-const ChartContainer = ({
-  title,
-  children,
-}: {
-  title: JSX.Element;
-  children: ReactElement;
-}) => (
-  <div className="relative mb-6 h-[calc(100%-1.5rem)] w-full break-words rounded bg-white shadow-lg">
-    <div className="w-full overflow-x-auto p-4">
-      <span className="text-md min-w-48 absolute -left-2 -top-4 inline-block rounded bg-slate-600 px-2 py-1 font-semibold text-white drop-shadow-lg">
-        {title}
-      </span>
-      {children}
-    </div>
-  </div>
-);
+interface BackendFormCommon
+  extends Omit<RestfullAPI, "ModemDataDestPort" | "ModemDataIP" | "Capture"> {}
 
-type ValueOf<T> = T[keyof T];
-
-const RecursiveTable = ({
-  th,
-  tr = { "No Data": [] },
-}: {
-  th: string[];
-  tr?: { [key: string]: any[] };
-}) => {
-  const keyValueArray = Object.entries<ValueOf<typeof tr>>(tr);
-  return (
-    <table className="w-full border-collapse items-center bg-transparent">
-      <thead>
-        <tr>
-          {th.map((h) => (
-            <th
-              key={h}
-              className="whitespace-nowrap border border-l-0 border-r-0 border-solid border-slate-100 bg-slate-50 px-6 py-3 text-left align-middle text-xs font-semibold text-slate-500"
-            >
-              {h}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {keyValueArray.map(([key, value]) => (
-          <tr key={key}>
-            <th className="whitespace-nowrap border-none px-6 py-2 text-left align-middle text-xs font-bold text-slate-600">
-              {key}
-            </th>
-            {value.map((v, ind) => (
-              <td
-                key={`${key}-${v}-${ind}`}
-                className="whitespace-nowrap border-none px-6 py-2 align-middle text-xs"
-              >
-                {v}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-};
-
-const defaultBackendForm = {
-  ServerType: "",
-  Timestamp: "UnixTime",
-  Capture: "",
-  RecordID: "",
-  ModemDataIP: "",
-  ModemDataDestPort: NaN,
-  ModemModel: "",
-};
+interface BackendForms extends Omit<RestfullAPI, keyof BackendFormCommon> {
+  componentId: string;
+}
 
 export default function Dashboard() {
+  const [isSendModalOpen, setIsSendModalOpen] = useState(false);
   const [egressForm, setEgressForm] = useState<{ [key: string]: string }>({});
-  const [backendForm, setBackendForm] = useState<RestfullAPI[]>([]);
+  const [backendFormCommon, setBackendFormCommon] = useState<BackendFormCommon>(
+    { ServerType: "", Timestamp: "", RecordID: "", ModemModel: "networkB" }
+  );
+  const [backendForms, setBackendForms] = useState<BackendForms[]>([]);
   const [egressPageData, setEgressPageData] = useState<CEgressPageData | null>(
     null
   );
@@ -100,22 +46,17 @@ export default function Dashboard() {
     backend: false,
   });
 
-  async function postEgressPageHandler() {
-    const reqUrl = new URL(
-      process.env.NEXT_PUBLIC_EGRESS_HANDLER_PATH as string,
-      `${process.env.NEXT_PUBLIC_EGRESS_URL}:${process.env.NEXT_PUBLIC_EGRESS_PORT}`
-    );
-    const response = await fetch(reqUrl, {
-      method: "POST",
-      body: JSON.stringify(egressForm),
-    });
-    if (response.ok) {
-      setSendStatus((prev) => ({ ...prev, egress: true }));
-    } else {
-      const error = await response.text();
-      console.error(error);
-    }
-  }
+  console.group("Rendering again ====");
+  console.info({
+    sendStatus,
+    egressForm,
+    backendFormCommon,
+    backendForms,
+    egressPageData,
+    signalPageDataSignalType,
+    signalPageDataSignalConfiguration,
+  });
+  console.groupEnd();
 
   async function getSignalPageData() {
     const reqUrl = new URL(
@@ -142,6 +83,21 @@ export default function Dashboard() {
 
       if (signalConfiguration)
         setSignalPageDataSignalConfiguration(signalConfiguration);
+
+      if (signalType && signalConfiguration) {
+        setEgressForm((prev) => ({
+          ...prev,
+          modemIp: "192.168.1.105",
+          username: "sfuser",
+          XXesh: "",
+          button: "Apply",
+        }));
+        setBackendFormCommon((prev) => ({
+          ...prev,
+          ServerType: signalType.loadedSignalType ?? "",
+          // RecordID: "",
+        }));
+      }
     } else {
       const error = await response.text();
       console.error(error);
@@ -161,9 +117,28 @@ export default function Dashboard() {
     if (response.ok) {
       const result = (await response.json()) as CEgressPageData;
       setEgressPageData(result);
-      setBackendForm(
-        Array.from({ length: result?.table?.length ?? 0 }).map(() => ({
-          ...defaultBackendForm,
+
+      const egressPageDataTable = (result?.table ?? []).sort((a, b) =>
+        a.componentId.localeCompare(b.componentId)
+      );
+      egressPageDataTable.forEach((t, i) => {
+        setEgressForm((prev) => ({
+          ...prev,
+          [`egressEnabled${i + 1}`]: t.enabled === "Enabled" ? "0" : "1",
+          [`egressProtocal${i + 1}`]: t.protocol === "TCP" ? "0" : "-1",
+          [`egressEncapsulation${i + 1}`]:
+            t.encapsulation === "RAW" ? "4" : "0",
+          [`egressServerMode${i + 1}`]: t.mode === "Client" ? "0" : "-1",
+          [`egressDestIp${i + 1}`]: t.ip ?? "",
+          [`egressDestPort${i + 1}`]: t.port ?? "",
+        }));
+      });
+      setBackendForms(
+        egressPageDataTable.map((t) => ({
+          componentId: t.componentId,
+          Capture: t.enabled,
+          ModemDataIP: t.ip ?? "",
+          ModemDataDestPort: t.port ?? "",
         }))
       );
     } else {
@@ -172,112 +147,101 @@ export default function Dashboard() {
     }
   }
 
-  function cEgressPageDataTr(
-    ct: CEgressPageData["table"][number],
-    options: {
-      set: typeof updateForm;
-      status: string;
-      protocal: string;
-      encapsulation: string;
-      mode: string;
-      ip: string;
-      port: string;
-    }
-  ) {
-    return {
-      "Current Status": [
-        ct.status,
-        <select
-          name={options.status}
-          value={(egressForm && egressForm[options.status]) ?? "-1"}
-          onChange={(e) => options.set(options.status, e.target.value)}
-        >
-          <option value="-1">錯誤! 沒有對應值</option>
-          <option value="0">Enable</option>
-          <option value="1">Disable</option>
-        </select>,
-      ],
-      "Transport Protocol": [
-        ct.protocol,
-        <select
-          name={options.protocal}
-          value={(egressForm && egressForm[options.protocal]) ?? "-1"}
-          onChange={(e) => options.set(options.protocal, e.target.value)}
-        >
-          <option value="-1">錯誤! 沒有對應值</option>
-          <option value="0">TCP</option>
-          <option value="1">???</option>
-        </select>,
-      ],
-      "Encapsulation Type": [
-        ct.encapsulation,
-        <select
-          name={options.encapsulation}
-          value={(egressForm && egressForm[options.encapsulation]) ?? "-1"}
-          onChange={(e) => options.set(options.encapsulation, e.target.value)}
-        >
-          <option value="-1">錯誤! 沒有對應值</option>
-          <option value="0">RAW</option>
-          <option value="1">???</option>
-        </select>,
-      ],
-      "Connection Mode": [
-        ct.mode,
-        <select
-          name={options.mode}
-          value={(egressForm && egressForm[options.mode]) ?? "-1"}
-          onChange={(e) => options.set(options.mode, e.target.value)}
-        >
-          <option value="-1">錯誤! 沒有對應值</option>
-          <option value="0">Client</option>
-          <option value="1">???</option>
-        </select>,
-      ],
-      "Server Ip": [
-        ct.ip,
-        <input
-          type="text"
-          name={options.ip}
-          value={(egressForm && egressForm[options.ip]) ?? "錯誤! 沒有對應值"}
-          onChange={(e) => options.set(options.ip, e.target.value)}
-        ></input>,
-      ],
-      "Server Port": [
-        ct.port,
-        <input
-          type="text"
-          name={options.port}
-          value={(egressForm && egressForm[options.port]) ?? "錯誤! 沒有對應值"}
-          onChange={(e) => options.set(options.port, e.target.value)}
-        ></input>,
-      ],
-    };
-  }
-
-  function updateForm(key: string, value: string) {
+  function updateForm(key: string, value: string, componentId: string) {
     setEgressForm((v) => ({ ...v, [key]: value }));
+    console.log(key, value);
+    if (key.includes("egressEnabled"))
+      setBackendForms((prev) =>
+        prev.map((pre) => {
+          if (pre.componentId !== componentId) return pre;
+          return {
+            ...pre,
+            Capture: value === "0" ? "Enable" : "Disable",
+          };
+        })
+      );
+
+    if (key.includes("egressDestIp"))
+      setBackendForms((prev) =>
+        prev.map((pre) => {
+          if (pre.componentId !== componentId) return pre;
+          return {
+            ...pre,
+            ModemDataIP: value,
+          };
+        })
+      );
+
+    if (key.includes("egressDestPort"))
+      setBackendForms((prev) =>
+        prev.map((pre) => {
+          if (pre.componentId !== componentId) return pre;
+          return {
+            ...pre,
+            ModemDataDestPort: value,
+          };
+        })
+      );
   }
 
-  async function postBackend(data: RestfullAPI) {
+  async function postBackend() {
+    const Timestamp = Math.round(Date.now() / 1000).toString();
+    setSendStatus((prev) => ({ ...prev, backend: "loading" }));
     const reqUrl = new URL(
       process.env.NEXT_PUBLIC_CAPTURE_COMMAND_PATH as string,
       `${process.env.NEXT_PUBLIC_BACKEND_URL}:${process.env.NEXT_PUBLIC_BACKEND_PORT}`
     );
+    const responses = await Promise.all(
+      backendForms.map(async (form) => {
+        const body = {
+          Timestamp,
+          ServerType: backendFormCommon.ServerType,
+          RecordID: backendFormCommon.RecordID,
+          ModemModel: backendFormCommon.ModemModel,
+          Capture: form.Capture,
+          ModemDataIP: form.ModemDataIP,
+          ModemDataDestPort: form.ModemDataDestPort,
+        };
+        return await fetch(reqUrl, {
+          method: "POST",
+          body: JSON.stringify(body),
+        });
+      })
+    );
+
+    if (responses.every((r) => r.ok)) {
+      setSendStatus((prev) => ({ ...prev, backend: true }));
+    } else {
+      const error = await Promise.all(
+        responses.map(async (r) => await r.text())
+      );
+      console.error(error);
+      setSendStatus((prev) => ({ ...prev, backend: false }));
+    }
+  }
+
+  async function postEgressPageHandler() {
+    setSendStatus((prev) => ({ ...prev, egress: "loading" }));
+    const reqUrl = new URL(
+      process.env.NEXT_PUBLIC_EGRESS_HANDLER_PATH as string,
+      `${process.env.NEXT_PUBLIC_EGRESS_URL}:${process.env.NEXT_PUBLIC_EGRESS_PORT}`
+    );
     const response = await fetch(reqUrl, {
       method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify(egressForm),
     });
     if (response.ok) {
-      setSendStatus((prev) => ({ ...prev, backend: true }));
+      setSendStatus((prev) => ({ ...prev, egress: true }));
     } else {
       const error = await response.text();
       console.error(error);
+      setSendStatus((prev) => ({ ...prev, egress: false }));
     }
   }
 
   useEffect(() => {
-    getEgressPageData();
     getSignalPageData();
+    getEgressPageData();
   }, []);
 
   return (
@@ -296,187 +260,20 @@ export default function Dashboard() {
       <main className="relative w-full px-4 py-8 lg:px-10">
         <div className="flex flex-wrap">
           <div className="w-full lg:w-6/12 lg:pr-6">
-            <ChartContainer title={<>Signal Type</>}>
-              <RecursiveTable
-                th={["Parameter", "Current Value"]}
-                tr={
-                  signalPageDataSignalType && {
-                    "Signal Type": [signalPageDataSignalType.loadedSignalType],
-                    Deframer: [signalPageDataSignalType.loadedDeframerName],
-                  }
-                }
-              />
-            </ChartContainer>
+            <SignalType signalType={signalPageDataSignalType} />
           </div>
           <div className="w-full lg:w-6/12">
-            <ChartContainer title={<>Egress Status</>}>
-              {/* <>Pending</> */}
-              <RecursiveTable
-                th={["Egress Channel", "Status"]}
-                tr={egressPageData?.table.reduce(
-                  (prev, curr, ind) => ({
-                    ...prev,
-                    [`channel ${ind + 1}`]: [curr.status],
-                  }),
-                  {}
-                )}
-              />
-            </ChartContainer>
+            <EgressStatus table={egressPageData?.table} />
           </div>
         </div>
-        <ChartContainer title={<>Signal Configuration</>}>
-          <div className="flex flex-wrap">
-            <div className="w-full lg:w-6/12 lg:pr-6">
-              <RecursiveTable
-                th={["Parameter", "Current Value"]}
-                tr={
-                  signalPageDataSignalConfiguration && {
-                    "System RFID": [
-                      signalPageDataSignalConfiguration.sfSystemRfid,
-                    ],
-                    "Sub Channel Case Notation": [
-                      signalPageDataSignalConfiguration.sfdbSubChannelCaseNotation,
-                    ],
-                    "Sub Channel Status": [
-                      signalPageDataSignalConfiguration.sfdbSubChannelInUse ===
-                      "1"
-                        ? "In-Use"
-                        : "Unknow",
-                    ],
-                    "L Band Frequency": [
-                      signalPageDataSignalConfiguration.lBandFrequency,
-                    ],
-                    "Off Air Frequency": [
-                      signalPageDataSignalConfiguration.sfOffAirFrequency,
-                    ],
-                    "Down Conversion Factor": [
-                      signalPageDataSignalConfiguration.sfDownConversionFactor,
-                    ],
-                    "Baud Rate": [signalPageDataSignalConfiguration.sfBaudRate],
-                  }
-                }
-              />
-            </div>
-            <div className="w-full lg:w-6/12">
-              <RecursiveTable
-                th={["Parameter", "Current Value"]}
-                tr={
-                  signalPageDataSignalConfiguration && {
-                    "Pls Signature": [
-                      signalPageDataSignalConfiguration.sfPlsSignature,
-                    ],
-                    "Power Mode": [
-                      signalPageDataSignalConfiguration.sfPowerMode,
-                    ],
-                    Derandomiser: [
-                      signalPageDataSignalConfiguration.sfDerandomiserEnable,
-                    ],
-                    "Error Frequency Offset": [
-                      signalPageDataSignalConfiguration.sfFrequencyError,
-                    ],
-                    "Input Level": [
-                      signalPageDataSignalConfiguration.sfInputLevel,
-                    ],
-                    "Cluster Variance (SNR)": [
-                      signalPageDataSignalConfiguration.sfClusterVariance,
-                    ],
-                    "Output Mode": [
-                      signalPageDataSignalConfiguration.sfOutputMode,
-                    ],
-                  }
-                }
-              />
-            </div>
-          </div>
-        </ChartContainer>
+        <SignalConfiguration table={signalPageDataSignalConfiguration} />
         <ChartContainer title={<>Egress Channels</>}>
           <>
-            <div className="block w-full pt-8">
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                {egressPageData &&
-                  egressPageData.table &&
-                  egressPageData.table.map((eTable, index) => (
-                    <ChartContainer
-                      key={eTable.componentId}
-                      title={<>Channel {index + 1}</>}
-                    >
-                      <RecursiveTable
-                        th={["Parameter", "Current Value", "New Value"]}
-                        tr={cEgressPageDataTr(eTable, {
-                          set: updateForm,
-                          status: `egressEnabled${index + 1}`,
-                          protocal: `egressProtocal${index + 1}`,
-                          encapsulation: `egressEncapsulation${index + 1}`,
-                          mode: `egressServerMode${index + 1}`,
-                          ip: `egressDestIp${index + 1}`,
-                          port: `egressDestPort${index + 1}`,
-                        })}
-                      />
-                    </ChartContainer>
-                  ))}
-                {/* <div className="w-full lg:w-6/12">
-                  {Boolean(cEgressPageData2) && (
-                    <ChartContainer title={<>Channel 2</>}>
-                      <RecursiveTable
-                        key={cEgressPageData2.componentId}
-                        th={cEgressPageDataTh}
-                        tr={cEgressPageDataTr(cEgressPageData2, {
-                          set: updateForm,
-                          status: "egressEnabled2",
-                          protocal: "egressProtocal2",
-                          encapsulation: "egressEncapsulation2",
-                          mode: "egressServerMode2",
-                          ip: "egressDestIp2",
-                          port: "egressDestPort2",
-                        })}
-                      />
-                    </ChartContainer>
-                  )}
-                </div> */}
-              </div>
-            </div>
-            {/* <div className="block w-full">
-              <div className="flex flex-wrap">
-                <div className="w-full lg:w-6/12 lg:pr-6">
-                  {Boolean(cEgressPageData3) && (
-                    <ChartContainer title={<>Channel 3</>}>
-                      <RecursiveTable
-                        key={cEgressPageData3.componentId}
-                        th={cEgressPageDataTh}
-                        tr={cEgressPageDataTr(cEgressPageData3, {
-                          set: updateForm,
-                          status: "egressEnabled3",
-                          protocal: "egressProtocal3",
-                          encapsulation: "egressEncapsulation3",
-                          mode: "egressServerMode3",
-                          ip: "egressDestIp3",
-                          port: "egressDestPort3",
-                        })}
-                      />
-                    </ChartContainer>
-                  )}
-                </div>
-                <div className="w-full lg:w-6/12">
-                  {Boolean(cEgressPageData4) && (
-                    <ChartContainer title={<>Channel 4</>}>
-                      <RecursiveTable
-                        key={cEgressPageData4.componentId}
-                        th={cEgressPageDataTh}
-                        tr={cEgressPageDataTr(cEgressPageData4, {
-                          set: updateForm,
-                          status: "egressEnabled4",
-                          protocal: "egressProtocal4",
-                          encapsulation: "egressEncapsulation4",
-                          mode: "egressServerMode4",
-                          ip: "egressDestIp4",
-                          port: "egressDestPort4",
-                        })}
-                      />
-                    </ChartContainer>
-                  )}
-                </div>
-              </div>
-            </div> */}
+            <EgressChannelTable
+              tables={egressPageData?.table}
+              updateForm={updateForm}
+              form={egressForm}
+            />
             <div className="flex w-full flex-row flex-wrap items-center justify-end gap-2">
               {/* <div className="relative rounded border-0 bg-amber-400 px-3 py-2 text-black">
                 <span className="inline-block align-middle">
@@ -490,30 +287,17 @@ export default function Dashboard() {
                 ))}
               </div> */}
               <button
-                disabled={false}
-                className="mt-auto rounded bg-slate-800 px-6 py-3 text-sm font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-lg focus:outline-none active:bg-slate-600 disabled:opacity-30"
+                disabled={
+                  sendStatus.backend === "loading" ||
+                  sendStatus.egress === "loading"
+                }
+                className="mt-auto rounded bg-slate-800 px-6 py-3 text-sm font-bold text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-lg focus:outline-none active:bg-slate-600 disabled:opacity-30"
                 type="button"
                 onClick={(e) => {
                   e.preventDefault();
-                  postBackend({
-                    // LinkID: {
-                    //   SatelliteID: "AA",
-                    //   Polarization: "V",
-                    //   Frequency: 11669000000,
-                    // },
-                    // InputPort: 1,
-                    // OutputPort: 1,
-                    // ServerIP: "192.168.016.51",
-                    // ServerPort: 5001,
-                    // ServerCh: 1,
-                    ServerType: "IP",
-                    Timestamp: "UnixTime",
-                    Capture: "Disable",
-                    RecordID: "Testxxx000000",
-                    ModemDataIP: "192.168.016.192",
-                    ModemDataDestPort: 6001,
-                    ModemModel: "MDM9000",
-                  });
+                  setIsSendModalOpen(true);
+                  postEgressPageHandler();
+                  postBackend();
                 }}
               >
                 送出變更
@@ -522,6 +306,67 @@ export default function Dashboard() {
           </>
         </ChartContainer>
       </main>
+      {isSendModalOpen && (
+        <ModalExt
+          header="資料傳送"
+          onCloseModal={() => setIsSendModalOpen(false)}
+          actions={[
+            <button
+              key="closeModal"
+              className="rounded border border-solid border-slate-500 bg-transparent px-4 py-2 text-sm font-bold text-slate-500 outline-none transition-all duration-150 ease-linear hover:bg-slate-500 hover:text-white focus:outline-none active:bg-slate-600"
+              type="button"
+              onClick={() => setIsSendModalOpen(false)}
+            >
+              OK
+            </button>,
+          ]}
+          ths={["傳送對象", "狀態", "傳送內容"]}
+        >
+          <>
+            <tr>
+              <th className="whitespace-nowrap border-l-0 border-r-0 border-t-0 px-6 py-2 text-left align-middle text-xs">
+                Egress (原系統)
+              </th>
+              <td className="whitespace-nowrap border-l-0 border-r-0 border-t-0 px-6 py-2 align-middle text-xs">
+                {!sendStatus.egress
+                  ? "❌ 失敗"
+                  : sendStatus.egress === "loading"
+                  ? "🔜 傳送中..."
+                  : "✅ 成功"}
+              </td>
+              <td className="whitespace-nowrap border-l-0 border-r-0 border-t-0 px-6 py-2 align-middle text-xs">
+                <pre className="max-h-[30vh] overflow-y-scroll">
+                  {JSON.stringify(egressForm, undefined, 4)}
+                </pre>
+              </td>
+            </tr>
+            <tr>
+              <th className="whitespace-nowrap border-l-0 border-r-0 border-t-0 px-6 py-2 text-left align-middle text-xs">
+                後臺系統
+              </th>
+              <td className="whitespace-nowrap border-l-0 border-r-0 border-t-0 px-6 py-2 align-middle text-xs">
+                {!sendStatus.backend
+                  ? "❌ 失敗"
+                  : sendStatus.backend === "loading"
+                  ? "🔜 傳送中..."
+                  : "✅ 成功"}
+              </td>
+              <td className="whitespace-nowrap border-l-0 border-r-0 border-t-0 px-6 py-2 align-middle text-xs">
+                <pre className="max-h-[30vh] overflow-y-scroll">
+                  {JSON.stringify(
+                    {
+                      ...backendFormCommon,
+                      ...backendForms,
+                    },
+                    undefined,
+                    4
+                  )}
+                </pre>
+              </td>
+            </tr>
+          </>
+        </ModalExt>
+      )}
     </div>
   );
 }
