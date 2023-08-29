@@ -1,3 +1,21 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  *::-webkit-scrollbar {
+    @apply h-2.5 w-1.5;
+  }
+
+  *::-webkit-scrollbar-track {
+    @apply rounded bg-slate-50;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    @apply rounded bg-slate-400;
+  }
+
+  *::-webkit-scrollbar-thumb:window-inactive {
+    @apply bg-slate-300;
+  }
+}

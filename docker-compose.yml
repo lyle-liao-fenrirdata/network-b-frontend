@@ -1,0 +1,14 @@
+version: "3"
+
+name: network-b
+services:
+  frontend:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: network-b-frontend
+    restart: always
+    env_file:
+      - ./.env
+    ports:
+      - 80:3000
