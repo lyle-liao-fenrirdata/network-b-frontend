@@ -204,6 +204,7 @@ export default function Dashboard() {
         };
         return await fetch(reqUrl, {
           method: "POST",
+          mode: "cors",
           body: JSON.stringify(body),
         });
       })
@@ -228,6 +229,7 @@ export default function Dashboard() {
     );
     const response = await fetch(reqUrl, {
       method: "POST",
+      mode: "cors",
       body: JSON.stringify(egressForm),
     });
     if (response.ok) {
