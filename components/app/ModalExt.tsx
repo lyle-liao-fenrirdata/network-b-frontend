@@ -1,7 +1,7 @@
 import React from "react";
 import Modal, { ModalProps } from "../Modal";
 
-interface ModalExtProps extends ModalProps {
+export interface ModalExtProps extends ModalProps {
   ths: string[];
 }
 

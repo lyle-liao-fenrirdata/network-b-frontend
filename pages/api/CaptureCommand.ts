@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 
-export default function handler(
+export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<"">
 ) {
@@ -10,27 +10,22 @@ export default function handler(
   switch (method) {
     case "POST":
       try {
-        const data = JSON.parse(body);
-        const requireKeys = [
-          // "LinkID",
-          // "InputPort",
-          // "OutputPort",
-          // "ServerIP",
-          // "ServerPort",
-          // "ServerCh",
-          "Capture",
-          "RecordID",
-          "ServerType",
-          "Timestamp",
-          "ModemDataIP",
-          "ModemDataDestPort"
-        ];
-        // const requireKeysOfLinkID = ["SatelliteID", "Polarization", "Frequency"]
-        if (requireKeys.every((r) => Object.hasOwn(data, r))) {
-          res.status(200).end("ok");
-          break;
-        }
-        res.status(406).end();
+        const url = new URL(
+          process.env.NEXT_PUBLIC_CAPTURE_COMMAND_PATH as string,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}:${process.env.NEXT_PUBLIC_BACKEND_PORT}`
+        );
+        const result = await fetch(url, {
+          method: "POST",
+          mode: "no-cors",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        });
+
+        if (result.status !== 200) throw new Error(result.statusText);
+        const responseBody = await result.text();
+        res.status(200).end(responseBody);
         break;
       } catch (error) {
         console.error(error);

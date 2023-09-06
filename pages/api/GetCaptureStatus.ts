@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 
-type Data = {
+export interface GetCaptureStatusBody {
   "CRCErrCnt": number,
   "CRCErrRate": number,
   "DataCnt": number,
@@ -10,11 +10,10 @@ type Data = {
   "RecordID": string
 }
 
-export default function handler(
+export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<Data>
+  res: NextApiResponse<GetCaptureStatusBody>
 ) {
-  const { body, method } = req;
   // request body json
   // {
   //   "RecordID": "xxxx",
@@ -30,29 +29,26 @@ export default function handler(
   //   "RecordID": "xxxx",
   //   "Dump": "Ascii"
   // }
-  console.log({ body, method });
+  const { headers, method, query, body } = req;
+  console.log({ method, url: headers["x-invoke-path"], query, body });
 
   switch (method) {
     case "GET":
       try {
-        const data = JSON.parse(body);
-        const requireKeys = [
-          "RecordID",
-          "Dump",
-        ];
-        if (requireKeys.every((r) => Object.hasOwn(data, r))) {
-          return res.status(200).json({
-            "CRCErrCnt": 0,
-            "CRCErrRate": 0,
-            "DataCnt": 2147483647,
-            "Dump": "total 452\ndrwxrwxrwx 2 user  user    4096 Aug 23 17:17 .\ndrwxrwxrwx 7 user  user    4096 Aug 21 19:26 ..\n-rwxrwxrwx 1 frank frank 445683 Aug 28 13:09 franktest.log\n-rwxrwxrwx 1 root  root     284 Aug 23 17:17 Testxxx000000_UnixTime_00001_20230823091744.pcap\n",
-            "PacketCnt": 0,
-            "ProgramCnt": 1234567890,
-            "RecordID": "xxxx"
-          });
-        }
-        res.status(406).end();
+        const RecordID = query["RecordID"] as string;
 
+        const url = new URL("http://192.168.17.31:5001/GetCaptureStatus");
+        url.search = new URLSearchParams({ RecordID }).toString();
+
+        const result = await fetch(url, { mode: "no-cors" });
+
+        if (result.status !== 200) throw new Error(result.statusText);
+        console.log(result.body)
+
+        const body = await result.json() as GetCaptureStatusBody;
+        console.log(body)
+        res.status(200).json(body);
+        break;
       } catch (error) {
         console.error(error);
         res.status(400).end(String(error));

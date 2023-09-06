@@ -6,12 +6,12 @@ export default function Home() {
           <div className="pt-32 sm:pt-0">
             <h2 className="text-4xl font-semibold text-slate-600">歡迎</h2>
             <p className="mt-4 text-lg leading-relaxed text-slate-500">
-              Tropical Cyclone Signal 的 Egress RESTfull API 訊號分配操作功能。
+              Tropical Cyclone Signal 的 Egress 訊號指定打包功能。
             </p>
             <div className="mt-12">
               {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
               <a
-                href="/app"
+                href="/dashboard"
                 className="get-started mb-1 mr-1 rounded bg-slate-400 px-6 py-4 text-sm font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-lg focus:outline-none active:bg-slate-500"
               >
                 進入系統
