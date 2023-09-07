@@ -10,6 +10,8 @@ export default async function handler(
   switch (method) {
     case "POST":
       try {
+        res.setHeader('Cache-Control', 's-maxage=5');
+
         const url = new URL(
           process.env.NEXT_PUBLIC_CAPTURE_COMMAND_PATH as string,
           `${process.env.NEXT_PUBLIC_BACKEND_URL}:${process.env.NEXT_PUBLIC_BACKEND_PORT}`

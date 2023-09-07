@@ -24,44 +24,94 @@ export default function Assign() {
     ModemDataDestPort: "",
     ModemModel: "",
   });
+  const [sendData, setSendData] = useState<RestfullAPI>();
   const [sendStatus, setSendStatus] = useState<boolean | "loading">(false);
   const [isSendModalOpen, setIsSendModalOpen] = useState(false);
 
-  function sendDataTransform(data: FormInputs) {
+  function sendDataTransform(data: FormInputs):
+    | {
+        ok: true;
+        data: RestfullAPI;
+      }
+    | {
+        ok: false;
+        data?: RestfullAPI;
+      } {
+    const {
+      SatelliteID,
+      Polarization,
+      Frequency,
+      ServerType,
+      Capture,
+      ModemDataIP,
+      ModemDataDestPort,
+      ModemModel,
+    } = data;
+    const error: { [key: string]: string } = {};
+
+    if (!SatelliteID.match(/^[A-Z]{2}$/))
+      error["Satellite ID"] = "必須為 2 個大寫英文";
+    if (!Polarization.match(/^[A-Z]{1}$/))
+      error.Polarization = "必須為 1 個大寫英文";
+    if (!Frequency.match(/^[\d]{11}$/)) error.Frequency = "必須為 11 位數數字";
+    if (!ServerType) error["Server Type"] = "請選擇型態";
+    if (!ModemDataDestPort) error["Modem Data Dest Port"] = "不可空白";
+    if (!ModemDataIP) error["Modem Data IP"] = "不可空白";
+    if (!ModemModel) error["Modem Model"] = "不可空白";
+    if (Object.keys(error).length > 0) {
+      window.alert(
+        Object.entries(error)
+          .map(([key, value]) => `${key} ${value}`)
+          .join("\n")
+      );
+      return {
+        ok: false,
+      };
+    }
     return {
-      RecordID: `${data.SatelliteID}${data.Polarization}${data.Frequency}`,
-      ServerType: data.ServerType,
-      Timestamp: Math.round(Date.now() / 1000).toString(),
-      Capture: data.Capture,
-      ModemDataIP: data.ModemDataIP,
-      ModemDataDestPort: data.ModemDataDestPort,
-      ModemModel: data.ModemModel,
+      ok: true,
+      data: {
+        RecordID: `${SatelliteID}${Polarization}${Frequency}`,
+        ServerType,
+        Timestamp: Math.round(Date.now() / 1000).toString(),
+        Capture,
+        ModemDataIP,
+        ModemDataDestPort,
+        ModemModel,
+      },
     };
   }
 
   function onChange(e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     const key = e.target.name;
     let value = e.target.value;
-    if (key === "SatelliteID") value = value.toUpperCase().slice(0, 2);
-    else if (key === "Polarization") value = value.toUpperCase().slice(0, 1);
-    else if (key === "Frequency" || key === "ModemDataDestPort") {
+    if (key === "SatelliteID") {
+      if (!value.match(/^[A-Za-z]{1,2}$/)) return;
+      value = value.toUpperCase();
+    } else if (key === "Polarization") {
+      if (!value.match(/^[A-Za-z]{1}$/)) return;
+      value = value.toUpperCase();
+    } else if (key === "Frequency" || key === "ModemDataDestPort") {
       if (!value.match(/^[\d]*$/g)) return;
-      value = value.toUpperCase().slice(0, 11);
+      value = value.slice(0, 11);
     } else if (key === "ModemDataIP") {
-      if (!value.match(/^[\d\.]*$/g)) return;
+      if (!value.match(/^[\d]*[\d\.]*[\d]*$/g)) return;
       value = value.toUpperCase().slice(0, 16);
     }
     setInputs((prev) => ({ ...prev, [key]: value }));
   }
 
   async function postBackend() {
+    const { ok, data } = sendDataTransform(inputs);
+    if (!ok) return;
     setSendStatus(() => "loading");
+    setSendData(() => data);
     const responses = await fetch("/api/CaptureCommand", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(sendDataTransform(inputs)),
+      body: JSON.stringify(data),
     });
 
     if (responses.ok) {
@@ -101,6 +151,7 @@ export default function Assign() {
                 </span>
                 <input
                   type="text"
+                  id="SatelliteID"
                   name="SatelliteID"
                   value={inputs.SatelliteID}
                   onChange={onChange}
@@ -117,6 +168,7 @@ export default function Assign() {
                 </span>
                 <input
                   type="text"
+                  id="Polarization"
                   name="Polarization"
                   value={inputs.Polarization}
                   onChange={onChange}
@@ -133,6 +185,7 @@ export default function Assign() {
                 </span>
                 <input
                   type="number"
+                  id="Frequency"
                   name="Frequency"
                   value={inputs.Frequency}
                   onChange={onChange}
@@ -148,6 +201,7 @@ export default function Assign() {
                   Server Type
                 </span>
                 <select
+                  id="ServerType"
                   name="ServerType"
                   value={inputs.ServerType}
                   onChange={onChange}
@@ -192,6 +246,7 @@ export default function Assign() {
                 </span>
                 <input
                   type="text"
+                  id="ModemDataIP"
                   name="ModemDataIP"
                   value={inputs.ModemDataIP}
                   onChange={onChange}
@@ -205,6 +260,7 @@ export default function Assign() {
                 </span>
                 <input
                   type="number"
+                  id="ModemDataDestPort"
                   name="ModemDataDestPort"
                   value={inputs.ModemDataDestPort}
                   onChange={onChange}
@@ -218,6 +274,7 @@ export default function Assign() {
                 </span>
                 <input
                   type="text"
+                  id="ModemModel"
                   name="ModemModel"
                   value={inputs.ModemModel}
                   onChange={onChange}
@@ -262,11 +319,11 @@ export default function Assign() {
         </Container>
       </main>
 
-      {isSendModalOpen && (
+      {isSendModalOpen && sendData && (
         <ModalExtAssign
           onCloseModal={() => setIsSendModalOpen(false)}
           status={sendStatus}
-          dataSent={sendDataTransform(inputs)}
+          dataSent={{ ...sendData }}
         />
       )}
     </div>

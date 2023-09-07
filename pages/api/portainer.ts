@@ -62,19 +62,25 @@ export default async function handler(
     switch (method) {
         case "GET":
             try {
+                res.setHeader('Cache-Control', 's-maxage=5');
+
                 const result = await fetch("http://192.168.17.31:9000/api/endpoints", {
                     method: "GET",
                     mode: "no-cors",
+                    cache: "no-store",
                     headers: {
                         "X-API-Key": X_API_Key,
                     },
                 });
                 if (result.status !== 200) throw new Error(result.statusText);
                 const body = await result.json() as PartialPortainerEndpoint[];
+                // console.log(body
+                //     .map((b) => b.Snapshots?.map((s) => s.DockerSnapshotRaw?.Containers?.map(c => c.Names) || []).flat() || [])
+                //     .flat())
                 const containers = body
                     .map((b) => b.Snapshots?.map((s) => s.DockerSnapshotRaw?.Containers || []).flat() || [])
                     .flat()
-                    .filter((c) => c.Names.some((n) => n.match(/[A-Z]{3}[\d]{11}_[\d]{10,}/)))
+                    .filter((c) => c.Names.some((n) => n.match(/[A-Z]{3}[\d]{11}_[\d]{10}\./)))
                     .sort((a, b) => b.Created - a.Created);
 
                 res.status(200).json(containers);
