@@ -49,27 +49,29 @@ interface PartialPortainerEndpoint {
     }[];
 }
 
-// portainer access token (admin S1B2S3)
-const X_API_Key = "ptr_ufdD7QSpTXhjKIoAaab1EqGbLr5ThWaEZaFY5XkFNgo=";
-
 export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse<any>
 ) {
     const { headers, method, query, body } = req;
     console.log({ method, url: headers["x-invoke-path"], query, body });
+    console.error(process.env.PORTAINER_X_API_KEY)
 
     switch (method) {
         case "GET":
             try {
                 res.setHeader('Cache-Control', 's-maxage=5');
 
-                const result = await fetch("http://192.168.17.31:9000/api/endpoints", {
-                    method: "GET",
+                const url = new URL(
+                    process.env.PORTAINER_ENDPOINT_PATH as string,
+                    `${process.env.BACKEND_URL}:${process.env.PORTAINER_ENDPOINT_PORT}`
+                );
+
+                const result = await fetch(url, {
                     mode: "no-cors",
                     cache: "no-store",
                     headers: {
-                        "X-API-Key": X_API_Key,
+                        "X-API-Key": process.env.PORTAINER_X_API_KEY as string,
                     },
                 });
                 if (result.status !== 200) throw new Error(result.statusText);

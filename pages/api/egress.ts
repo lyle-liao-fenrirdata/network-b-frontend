@@ -32,33 +32,6 @@ export default function handler(
         res.status(400).end(String(error));
         break;
       }
-    case "POST":
-      try {
-        const data = JSON.parse(body);
-        const requireKeys = [
-          "modemIp",
-          "username",
-          "XXesh",
-          "egressEnabled1",
-          "egressProtocal1",
-          "egressEncapsulation1",
-          "egressServerMode1",
-          "egressDestIp1",
-          "egressDestPort1",
-          "button",
-        ];
-        if (requireKeys.every((r) => Object.hasOwn(data, r))) {
-          // res.status(302).end();
-          res.status(200).end();
-          break;
-        }
-        res.status(406).end();
-        break;
-      } catch (error) {
-        console.error(error);
-        res.status(400).end(String(error));
-        break;
-      }
     default:
       res.status(405).end()
   }

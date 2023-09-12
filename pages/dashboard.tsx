@@ -69,9 +69,7 @@ export default function Dashboard() {
       console.error(error);
       window.alert(error);
     }
-    window.alert(
-      `已成功停用 ${containerName} 的請求\nPortainer Endpoints 更新較慢\n請等待2-3分鐘`
-    );
+    window.alert(`已成功停用 ${containerName} 的請求\n更新較慢，請等待2-3分鐘`);
     setIsLoading(() => false);
   }
 
@@ -107,14 +105,29 @@ export default function Dashboard() {
           />
         </Container>
         <Container>
-          <textarea
-            rows={10}
-            disabled
-            readOnly
-            value={captureStatus?.Dump}
-            className="block w-full whitespace-pre-line rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900"
-            placeholder="無資料"
-          />
+          <>
+            <div className="flex flex-row justify-between gap-4 pb-3">
+              <p className="font-bold">擷取資料夾狀況</p>
+              <p className="text-sm">
+                最後更新時間:{" "}
+                {!captureStatus?.updatedAt
+                  ? "無更新"
+                  : new Intl.DateTimeFormat("zh-TW", {
+                      hour12: false,
+                      dateStyle: "long",
+                      timeStyle: "medium",
+                    }).format(captureStatus.updatedAt)}
+              </p>
+            </div>
+            <textarea
+              rows={25}
+              disabled
+              readOnly
+              value={captureStatus?.Dump}
+              className="block w-full whitespace-pre-line rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900"
+              placeholder="無資料"
+            />
+          </>
         </Container>
       </main>
     </div>

@@ -4,7 +4,7 @@ import Container from "@/components/Container";
 import SignalInfo from "@/components/SignalInfo";
 import ModalExtAssign from "@/components/app/ModalExtAssign";
 import { RestfullAPI } from "@/fakeData/C_PageData";
-import { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, useState } from "react";
 
 interface FormInputs extends Omit<RestfullAPI, "RecordID"> {
   SatelliteID: string;
@@ -23,6 +23,7 @@ export default function Assign() {
     ModemDataIP: "",
     ModemDataDestPort: "",
     ModemModel: "",
+    Source: "networkB",
   });
   const [sendData, setSendData] = useState<RestfullAPI>();
   const [sendStatus, setSendStatus] = useState<boolean | "loading">(false);
@@ -46,6 +47,7 @@ export default function Assign() {
       ModemDataIP,
       ModemDataDestPort,
       ModemModel,
+      Source,
     } = data;
     const error: { [key: string]: string } = {};
 
@@ -78,6 +80,7 @@ export default function Assign() {
         ModemDataIP,
         ModemDataDestPort,
         ModemModel,
+        Source,
       },
     };
   }
@@ -184,7 +187,7 @@ export default function Assign() {
                   Frequency
                 </span>
                 <input
-                  type="number"
+                  type="text"
                   id="Frequency"
                   name="Frequency"
                   value={inputs.Frequency}
@@ -209,7 +212,7 @@ export default function Assign() {
                 >
                   <option value="">請選擇</option>
                   <option value="IP">IP</option>
-                  <option value="DVB">DVB</option>
+                  <option value="IP">DVB</option>
                   <option value="HDLC">HDLC</option>
                 </select>
               </div>
@@ -259,7 +262,7 @@ export default function Assign() {
                   Modem Data Dest Port
                 </span>
                 <input
-                  type="number"
+                  type="text"
                   id="ModemDataDestPort"
                   name="ModemDataDestPort"
                   value={inputs.ModemDataDestPort}
@@ -289,7 +292,7 @@ export default function Assign() {
                       <b className="capitalize">注意!</b>{" "}
                       僅以下IP開頭的，打包功能才可接收
                     </span>
-                    {["192.168.16.31"].map((ip) => (
+                    {["192.168.17.31"].map((ip) => (
                       <span
                         key={ip}
                         className="pl-4 pr-4 text-red-700 last:pr-0"

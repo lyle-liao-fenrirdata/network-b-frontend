@@ -278,6 +278,7 @@ const postCookie = {
 // }
 
 // {
+//     "Source": "networkB"
 //     "ModemModel": "MDM9000"   #Modem 的型號 ==> "networkB"
 //     "Timestamp": "UnixTime", #Unix
 //     "RecordID ": "CCV1250025000 "  #RecordID
@@ -286,26 +287,6 @@ const postCookie = {
 //     "ModemDataIP": "192.168.016.192" #解調器IP ==> Server Ip
 //     "ModemDataDestPort": 6001    #解調器串流目的 port ==> Server Port
 // }
-
-export const restfullAPI: RestfullAPI = {
-    // "LinkID": {
-    //     "SatelliteID": "AA",
-    //     "Polarization": "V",
-    //     "Frequency": 11669000000
-    // },
-    // "InputPort": 1,
-    // "OutputPort": 1,
-    // "ServerIP": "192.168.016.51",
-    // "ServerPort": 5001,
-    // "ServerCh": 1,
-    "ServerType": "IP",
-    "Timestamp": "UnixTime",
-    "Capture": "Disable",
-    "RecordID": "Testxxx000000",
-    "ModemDataIP": "192.168.016.192",
-    "ModemDataDestPort": "6001",
-    "ModemModel": "MDM9000",
-}
 
 export interface RestfullAPI {
     // LinkID: {
@@ -325,4 +306,5 @@ export interface RestfullAPI {
     ModemDataIP: string;
     ModemDataDestPort: string;
     ModemModel: string;
+    Source: "networkB"
 }

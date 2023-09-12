@@ -4,8 +4,8 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<"">
 ) {
-  const { body, method } = req;
-  console.log({ body, method });
+  const { body, method, headers, query } = req;
+  console.log({ method, url: headers["x-invoke-path"], query, body });
 
   switch (method) {
     case "POST":
@@ -13,8 +13,8 @@ export default async function handler(
         res.setHeader('Cache-Control', 's-maxage=5');
 
         const url = new URL(
-          process.env.NEXT_PUBLIC_CAPTURE_COMMAND_PATH as string,
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}:${process.env.NEXT_PUBLIC_BACKEND_PORT}`
+          process.env.CAPTURE_COMMAND_PATH as string,
+          `${process.env.BACKEND_URL}:${process.env.BACKEND_PORT}`
         );
         const result = await fetch(url, {
           method: "POST",
