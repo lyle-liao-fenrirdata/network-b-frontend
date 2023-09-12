@@ -25,7 +25,7 @@ export const TableContainer = ({
         <th className="whitespace-nowrap border border-l-0 border-r-0 border-solid border-slate-100 bg-slate-50 px-6 py-3 text-left align-middle text-xs font-semibold text-slate-500">
           Created At
         </th>
-        <th className="whitespace-nowrap border border-l-0 border-r-0 border-solid border-slate-100 bg-slate-50 px-6 py-3 text-left text-center align-middle text-xs font-semibold text-slate-500">
+        <th className="whitespace-nowrap border border-l-0 border-r-0 border-solid border-slate-100 bg-slate-50 px-6 py-3 text-center align-middle text-xs font-semibold text-slate-500">
           停用容器
         </th>
       </tr>

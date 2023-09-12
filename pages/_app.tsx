@@ -10,7 +10,7 @@ export default function App({ Component, pageProps }: AppProps) {
           name="viewport"
           content="width=device-width, initial-scale=1, shrink-to-fit=no"
         />
-        <title>訊號打包</title>
+        <title>訊號側錄服務</title>
       </Head>
       <Component {...pageProps} />
     </>

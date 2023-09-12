@@ -4,12 +4,19 @@ import Container from "@/components/Container";
 import SignalInfo from "@/components/SignalInfo";
 import ModalExtAssign from "@/components/app/ModalExtAssign";
 import { RestfullAPI } from "@/fakeData/C_PageData";
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 
 interface FormInputs extends Omit<RestfullAPI, "RecordID"> {
   SatelliteID: string;
   Polarization: string;
   Frequency: string;
+}
+
+interface Satelite {
+  id: number;
+  code: string;
+  name: string;
+  longitude: string;
 }
 
 export default function Assign() {
@@ -28,6 +35,7 @@ export default function Assign() {
   const [sendData, setSendData] = useState<RestfullAPI>();
   const [sendStatus, setSendStatus] = useState<boolean | "loading">(false);
   const [isSendModalOpen, setIsSendModalOpen] = useState(false);
+  const [satellites, setSatellites] = useState<Satelite[]>([]);
 
   function sendDataTransform(data: FormInputs):
     | {
@@ -126,6 +134,17 @@ export default function Assign() {
     }
   }
 
+  useEffect(() => {
+    fetch("/SatelliteModel.json")
+      .then(async (res) => (await res.json()) as Satelite[])
+      .then(setSatellites)
+      .catch((err) => {
+        console.error(String(err));
+      });
+  }, []);
+
+  console.warn(satellites);
+
   return (
     <div className="relative min-h-screen min-w-full bg-slate-100">
       <AppNavbar />
@@ -148,8 +167,8 @@ export default function Assign() {
                 />
               </div>
               {/* Satellite ID */}
-              <div className="flex w-full flex-row flex-nowrap items-center justify-start gap-2">
-                <span className="min-w-[96px] whitespace-nowrap pl-4">
+              <div className="flex w-full flex-row flex-wrap items-center justify-start gap-2">
+                <span className="min-w-[96px] whitespace-nowrap pl-3">
                   Satellite ID
                 </span>
                 <input
@@ -163,27 +182,46 @@ export default function Assign() {
                 <span className="grow-1 whitespace-pre-line italic opacity-80">
                   衛星名簡寫兩碼，如AA、DH。
                 </span>
+                <select
+                  id="SatelliteIDSelect"
+                  name="SatelliteID"
+                  value={inputs.SatelliteID}
+                  onChange={onChange}
+                  className="relative ml-auto rounded bg-white px-3 py-2 text-sm text-slate-600 shadow outline-none focus:border-transparent focus:outline-none active:outline-none"
+                >
+                  <option value="">請選擇</option>
+                  {satellites.map((s) => (
+                    <option key={s.id} value={s.code}>
+                      {s.code} - {s.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               {/* Polarization */}
               <div className="flex w-full flex-row flex-nowrap items-center justify-start gap-2">
-                <span className="min-w-[96px] whitespace-nowrap pl-4">
+                <span className="min-w-[96px] whitespace-nowrap pl-3">
                   Polarization
                 </span>
-                <input
-                  type="text"
+                <select
                   id="Polarization"
                   name="Polarization"
                   value={inputs.Polarization}
                   onChange={onChange}
-                  className="relative w-[128px] shrink-0 rounded bg-white px-3 py-2 text-sm text-slate-600 outline-none"
-                />
+                  className="relative w-[128px] shrink-0 rounded bg-white px-3 py-2 text-sm text-slate-600 shadow outline-none focus:border-transparent focus:outline-none active:outline-none"
+                >
+                  <option value="">請選擇</option>
+                  <option value="V">V</option>
+                  <option value="H">H</option>
+                  <option value="L">L</option>
+                  <option value="R">R</option>
+                </select>
                 <span className="grow-1 whitespace-pre-line italic opacity-80">
                   極化一碼，如V、H、L、R。
                 </span>
               </div>
               {/* Frequency */}
               <div className="flex w-full flex-row flex-nowrap items-center justify-start gap-2">
-                <span className="min-w-[96px] whitespace-nowrap pl-4">
+                <span className="min-w-[96px] whitespace-nowrap pl-3">
                   Frequency
                 </span>
                 <input

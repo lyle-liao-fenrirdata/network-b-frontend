@@ -25,7 +25,7 @@ export default function AppLinks() {
             aria-selected={router.pathname === "/assign"}
             className="inline-block rounded-t-lg px-4 py-2 font-bold drop-shadow-lg hover:text-sky-500 aria-selected:bg-slate-600 aria-selected:text-white"
           >
-            指定打包
+            側錄服務
           </Link>
         </li>
       </ul>

@@ -6,7 +6,7 @@ export default function Home() {
           <div className="pt-32 sm:pt-0">
             <h2 className="text-4xl font-semibold text-slate-600">歡迎</h2>
             <p className="mt-4 text-lg leading-relaxed text-slate-500">
-              Tropical Cyclone Signal 的 Egress 訊號指定打包功能。
+              Tropical Cyclone Signal 的 Egress 訊號指定側錄服務功能。
             </p>
             <div className="mt-12">
               {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
