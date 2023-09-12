@@ -49,39 +49,48 @@ interface PartialPortainerEndpoint {
     }[];
 }
 
+const X_API_KEY = process.env.PORTAINER_X_API_KEY as string;
+
 export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse<any>
 ) {
     const { headers, method, query, body } = req;
     console.log({ method, url: headers["x-invoke-path"], query, body });
-    console.error(process.env.PORTAINER_X_API_KEY)
 
     switch (method) {
         case "GET":
             try {
-                res.setHeader('Cache-Control', 's-maxage=5');
+                res.setHeader('Cache-Control', 's-maxage=1');
 
-                const url = new URL(
-                    process.env.PORTAINER_ENDPOINT_PATH as string,
-                    `${process.env.BACKEND_URL}:${process.env.PORTAINER_ENDPOINT_PORT}`
-                );
+                const endpointPath = process.env.PORTAINER_ENDPOINT_PATH || "/api/endpoints";
+                const backendUri = `${process.env.BACKEND_URL}:${process.env.PORTAINER_ENDPOINT_PORT}`;
 
-                const result = await fetch(url, {
+                const endpointUrl = new URL(endpointPath, backendUri);
+                endpointUrl.searchParams.append("name", process.env.PORTAINER_ENDPOINT_NAME || 'local');
+                const endpointResult = await fetch(endpointUrl, {
                     mode: "no-cors",
                     cache: "no-store",
                     headers: {
-                        "X-API-Key": process.env.PORTAINER_X_API_KEY as string,
+                        "X-API-Key": X_API_KEY
+                    },
+                });
+                if (endpointResult.status !== 200) throw new Error(endpointResult.statusText);
+                const endpointBody = await endpointResult.json() as PartialPortainerEndpoint[];
+
+                const containerPath = `${endpointPath}/${endpointBody[0]?.Id || "2"}${process.env.PORTAINER_ENDPOINT_ID_CONTAINER_PATH || "/docker/containers/json"}`
+                const containertUrl = new URL(containerPath, backendUri);
+                const result = await fetch(containertUrl, {
+                    mode: "no-cors",
+                    cache: "no-store",
+                    headers: {
+                        "X-API-Key": X_API_KEY,
                     },
                 });
                 if (result.status !== 200) throw new Error(result.statusText);
-                const body = await result.json() as PartialPortainerEndpoint[];
-                // console.log(body
-                //     .map((b) => b.Snapshots?.map((s) => s.DockerSnapshotRaw?.Containers?.map(c => c.Names) || []).flat() || [])
-                //     .flat())
+                const body = await result.json() as PortainerContainer[];
+
                 const containers = body
-                    .map((b) => b.Snapshots?.map((s) => s.DockerSnapshotRaw?.Containers || []).flat() || [])
-                    .flat()
                     .filter((c) => c.Names.some((n) => n.match(/[A-Z]{3}[\d]{11}_[\d]{10}\./)))
                     .sort((a, b) => b.Created - a.Created);
 

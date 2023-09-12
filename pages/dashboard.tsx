@@ -23,24 +23,25 @@ export default function Dashboard() {
     getPortainerContainers();
     const interval = setInterval(() => {
       getPortainerContainers();
-    }, 10000);
+    }, 5000);
 
     return () => clearInterval(interval);
   }, []);
 
+  async function getCaptureStatus() {
+    return await fetch("/api/GetCaptureStatus", {
+      cache: "no-store",
+    })
+      .then((res) => res.json())
+      .then(setCaptureStatus)
+      .catch((err) => console.error(err));
+  }
+
   useEffect(() => {
-    async function getCaptureStatus() {
-      return await fetch("/api/GetCaptureStatus", {
-        cache: "no-store",
-      })
-        .then((res) => res.json())
-        .then(setCaptureStatus)
-        .catch((err) => console.error(err));
-    }
     getCaptureStatus();
     const interval = setInterval(() => {
       getCaptureStatus();
-    }, 10000);
+    }, 5000);
 
     return () => clearInterval(interval);
   }, []);
@@ -69,7 +70,8 @@ export default function Dashboard() {
       console.error(error);
       window.alert(error);
     }
-    window.alert(`已成功停用 ${containerName} 的請求\n更新較慢，請等待2-3分鐘`);
+    getCaptureStatus();
+    window.alert(`已成功停用 ${containerName} 的請求`);
     setIsLoading(() => false);
   }
 

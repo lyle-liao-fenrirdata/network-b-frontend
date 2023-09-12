@@ -74,7 +74,7 @@ export default function Assign() {
       ok: true,
       data: {
         RecordID: `${SatelliteID}${Polarization}${Frequency}`,
-        ServerType,
+        ServerType: ServerType === "DVB" ? "IP" : ServerType,
         Timestamp: Math.round(Date.now() / 1000).toString(),
         Capture,
         ModemDataIP,
@@ -178,7 +178,7 @@ export default function Assign() {
                   className="relative w-[128px] shrink-0 rounded bg-white px-3 py-2 text-sm text-slate-600 outline-none"
                 />
                 <span className="grow-1 whitespace-pre-line italic opacity-80">
-                  極化一碼，如V、H。
+                  極化一碼，如V、H、L、R。
                 </span>
               </div>
               {/* Frequency */}
@@ -212,7 +212,7 @@ export default function Assign() {
                 >
                   <option value="">請選擇</option>
                   <option value="IP">IP</option>
-                  <option value="IP">DVB</option>
+                  <option value="DVB">DVB</option>
                   <option value="HDLC">HDLC</option>
                 </select>
               </div>
