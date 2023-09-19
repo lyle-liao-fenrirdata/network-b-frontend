@@ -2,6 +2,16 @@
 const nextConfig = {
   output: "standalone",
   reactStrictMode: true,
+  experimental: {
+    swcPlugins: [
+      [
+        "next-superjson-plugin",
+        {
+          excluded: [],
+        },
+      ],
+    ],
+  },
 };
 
-module.exports = nextConfig;
+export default nextConfig;
