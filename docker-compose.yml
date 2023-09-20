@@ -13,4 +13,4 @@ services:
     ports:
       - 80:80
     volumes:
-      - /var/sqlite:/app/sqlite
+      - /home/user/frontend/network-b-frontend/sqlite:/app/sqlite

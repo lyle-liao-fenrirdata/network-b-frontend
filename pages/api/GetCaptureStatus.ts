@@ -34,8 +34,8 @@ export default async function handler(
         res.setHeader('Cache-Control', 's-maxage=5')
 
         const url = new URL(
-          process.env.GET_STATUS_PATH as string,
-          `${process.env.BACKEND_URL}:${process.env.BACKEND_PORT}`
+          process.env.GET_STATUS_PATH || '/GetCaptureStatus',
+          `${process.env.BACKEND_URL || 'http://192.168.17.31'}:${process.env.BACKEND_PORT || '5001'}`
         );
 
         const result = await fetch(url, {

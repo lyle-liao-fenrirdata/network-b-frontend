@@ -13,8 +13,8 @@ export default async function handler(
         res.setHeader('Cache-Control', 's-maxage=5');
 
         const url = new URL(
-          process.env.CAPTURE_COMMAND_PATH as string,
-          `${process.env.BACKEND_URL}:${process.env.BACKEND_PORT}`
+          process.env.CAPTURE_COMMAND_PATH || '/CaptureCommand',
+          `${process.env.BACKEND_URL || 'http://192.168.17.31'}:${process.env.BACKEND_PORT || '5001'}`
         );
         const result = await fetch(url, {
           method: "POST",
