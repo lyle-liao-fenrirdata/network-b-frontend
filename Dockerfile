@@ -22,6 +22,7 @@ WORKDIR /app
 COPY --from=deps --link /app/node_modules ./node_modules
 COPY --link  . .
 
+RUN npx prisma generate
 RUN npm run build
 
 # 3. Production image, copy all the files and run next
