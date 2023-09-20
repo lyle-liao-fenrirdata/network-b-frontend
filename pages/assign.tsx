@@ -4,7 +4,29 @@ import Container from "@/components/Container";
 import SignalInfo from "@/components/SignalInfo";
 import ModalExtAssign from "@/components/app/ModalExtAssign";
 import { RestfullAPI } from "@/fakeData/C_PageData";
+import { prisma } from "@/prisma/prisma";
+import { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import { ChangeEvent, useEffect, useState } from "react";
+import { Hosts } from "./host";
+import { useRouter } from "next/router";
+import Modal from "@/components/Modal";
+
+export const getServerSideProps: GetServerSideProps<{
+  hosts: Pick<Hosts[number], "ipAddress" | "hostName">[];
+}> = async () => {
+  const hosts = await prisma.host.findMany({
+    where: { deletedAt: null },
+    select: {
+      ipAddress: true,
+      hostName: true,
+    },
+    orderBy: { ipAddress: "asc" },
+  });
+
+  return {
+    props: { hosts },
+  };
+};
 
 interface FormInputs extends Omit<RestfullAPI, "RecordID"> {
   SatelliteID: string;
@@ -19,7 +41,11 @@ interface Satelite {
   longitude: string;
 }
 
-export default function Assign() {
+export default function Assign({
+  hosts,
+}: InferGetServerSidePropsType<typeof getServerSideProps>) {
+  const router = useRouter();
+  const [ipAddress, setIpAddress] = useState<string>("");
   const [inputs, setInputs] = useState<FormInputs>({
     SatelliteID: "",
     Polarization: "",
@@ -117,13 +143,16 @@ export default function Assign() {
     if (!ok) return;
     setSendStatus(() => "loading");
     setSendData(() => data);
-    const responses = await fetch("/api/CaptureCommand", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
+    const responses = await fetch(
+      "/api/CaptureCommand?ipAddress=" + ipAddress,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      }
+    );
 
     if (responses.ok) {
       setSendStatus(() => true);
@@ -143,7 +172,8 @@ export default function Assign() {
       });
   }, []);
 
-  console.warn(satellites);
+  const onCloseModal = () =>
+    sendStatus === true ? router.reload() : setIsSendModalOpen(false);
 
   return (
     <div className="relative min-h-screen min-w-full bg-slate-100">
@@ -156,9 +186,7 @@ export default function Assign() {
             <div className="flex flex-col items-start gap-2">
               {/* Record ID */}
               <div className="flex w-full flex-row flex-nowrap items-center justify-start gap-2">
-                <span className="min-w-[96px] whitespace-nowrap">
-                  Record ID
-                </span>
+                <span className="min-w-[96px] whitespace-nowrap">線路編號</span>
                 <input
                   type="text"
                   disabled
@@ -169,7 +197,7 @@ export default function Assign() {
               {/* Satellite ID */}
               <div className="flex w-full flex-row flex-wrap items-center justify-start gap-2">
                 <span className="min-w-[96px] whitespace-nowrap pl-3">
-                  Satellite ID
+                  衛星代號
                 </span>
                 <input
                   type="text"
@@ -179,9 +207,6 @@ export default function Assign() {
                   onChange={onChange}
                   className="relative w-[128px] shrink-0 rounded bg-white px-3 py-2 text-sm text-slate-600 outline-none"
                 />
-                <span className="grow-1 whitespace-pre-line italic opacity-80">
-                  衛星名簡寫兩碼，如AA、DH。
-                </span>
                 <select
                   id="SatelliteIDSelect"
                   name="SatelliteID"
@@ -200,7 +225,7 @@ export default function Assign() {
               {/* Polarization */}
               <div className="flex w-full flex-row flex-nowrap items-center justify-start gap-2">
                 <span className="min-w-[96px] whitespace-nowrap pl-3">
-                  Polarization
+                  極化
                 </span>
                 <select
                   id="Polarization"
@@ -215,14 +240,11 @@ export default function Assign() {
                   <option value="L">L</option>
                   <option value="R">R</option>
                 </select>
-                <span className="grow-1 whitespace-pre-line italic opacity-80">
-                  極化一碼，如V、H、L、R。
-                </span>
               </div>
               {/* Frequency */}
               <div className="flex w-full flex-row flex-nowrap items-center justify-start gap-2">
                 <span className="min-w-[96px] whitespace-nowrap pl-3">
-                  Frequency
+                  中心頻率
                 </span>
                 <input
                   type="text"
@@ -232,21 +254,36 @@ export default function Assign() {
                   onChange={onChange}
                   className="relative w-[128px] shrink-0 rounded bg-white px-3 py-2 text-sm text-slate-600 outline-none"
                 />
-                <span className="grow whitespace-pre-line italic opacity-80">
-                  中心頻率Hz，11位數，如 11669000000。
-                </span>
               </div>
+              {/* backend ip */}
+              <div className="flex w-full flex-row flex-nowrap items-center justify-start gap-2">
+                <span className="min-w-[96px] whitespace-nowrap">服務類型</span>
+                <select
+                  id="ipAddress"
+                  name="ipAddress"
+                  value={ipAddress}
+                  onChange={(e) => setIpAddress(e.target.value)}
+                  className="relative w-full rounded bg-white px-3 py-2 text-sm text-slate-600 placeholder-slate-300 shadow outline-none focus:border-transparent focus:outline-none active:outline-none"
+                >
+                  {hosts.map(({ ipAddress, hostName }) => (
+                    <option key={ipAddress} value={hostName}>
+                      {`${hostName} - ${ipAddress}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            {/* Right Part */}
+            <div className="flex flex-col items-start gap-2">
               {/* Server Type */}
               <div className="flex w-full flex-row flex-nowrap items-center justify-start gap-2">
-                <span className="min-w-[96px] whitespace-nowrap">
-                  Server Type
-                </span>
+                <span className="min-w-[96px] whitespace-nowrap">服務類型</span>
                 <select
                   id="ServerType"
                   name="ServerType"
                   value={inputs.ServerType}
                   onChange={onChange}
-                  className="relative w-full rounded bg-white px-3 py-2 text-sm text-slate-600 placeholder-slate-300 shadow outline-none focus:border-transparent focus:outline-none active:outline-none"
+                  className="relative w-[128px] rounded bg-white px-3 py-2 text-sm text-slate-600 placeholder-slate-300 shadow outline-none focus:border-transparent focus:outline-none active:outline-none"
                 >
                   <option value="">請選擇</option>
                   <option value="IP">IP</option>
@@ -254,11 +291,8 @@ export default function Assign() {
                   <option value="HDLC">HDLC</option>
                 </select>
               </div>
-            </div>
-            {/* Right Part */}
-            <div className="flex flex-col items-start gap-2">
               {/* Timestamp (Unix Time) */}
-              <div className="flex w-full flex-row flex-nowrap items-center justify-start gap-2">
+              {/* <div className="flex w-full flex-row flex-nowrap items-center justify-start gap-2">
                 <span className="min-w-[168px] whitespace-nowrap">
                   Timestamp (Unix Time)
                 </span>
@@ -268,9 +302,9 @@ export default function Assign() {
                   value="資料送出時，自動產生"
                   className="relative w-full rounded border-transparent bg-white px-3 py-2 text-center text-sm text-slate-600 outline-none"
                 />
-              </div>
+              </div> */}
               {/* Capture */}
-              <div className="flex w-full flex-row flex-nowrap items-center justify-start gap-2">
+              {/* <div className="flex w-full flex-row flex-nowrap items-center justify-start gap-2">
                 <span className="min-w-[168px] whitespace-nowrap">Capture</span>
                 <input
                   type="text"
@@ -279,11 +313,11 @@ export default function Assign() {
                   value={inputs.Capture}
                   className="relative w-full rounded border-transparent bg-white px-3 py-2 text-center text-sm text-slate-600 outline-none"
                 />
-              </div>
+              </div> */}
               {/* Modem Data IP */}
               <div className="flex w-full flex-row flex-nowrap items-center justify-start gap-2">
                 <span className="min-w-[168px] whitespace-nowrap">
-                  Modem Data IP
+                  調解器IP位址
                 </span>
                 <input
                   type="text"
@@ -297,7 +331,7 @@ export default function Assign() {
               {/* Modem Data Dest Port */}
               <div className="flex w-full flex-row flex-nowrap items-center justify-start gap-2">
                 <span className="min-w-[168px] whitespace-nowrap">
-                  Modem Data Dest Port
+                  調解器資料目的的埠
                 </span>
                 <input
                   type="text"
@@ -311,7 +345,7 @@ export default function Assign() {
               {/* Modem Model */}
               <div className="flex w-full flex-row flex-nowrap items-center justify-start gap-2">
                 <span className="min-w-[168px] whitespace-nowrap">
-                  Modem Model
+                  調解器型號
                 </span>
                 <input
                   type="text"
@@ -324,7 +358,7 @@ export default function Assign() {
               </div>
               {/* action section */}
               <div className="ml-auto mt-auto flex flex-row flex-nowrap items-center justify-start gap-2">
-                <div className="flex w-full flex-row flex-wrap items-center justify-end gap-2">
+                {/* <div className="flex w-full flex-row flex-wrap items-center justify-end gap-2">
                   <div className="relative rounded border-0 bg-amber-200 px-3 py-2 text-black">
                     <span className="inline-block">
                       <b className="capitalize">注意!</b>{" "}
@@ -339,7 +373,7 @@ export default function Assign() {
                       </span>
                     ))}
                   </div>
-                </div>
+                </div> */}
                 <button
                   className="shrink-0 rounded border border-solid border-slate-500 bg-transparent px-4 py-2 font-bold text-slate-500 outline-none transition-all hover:bg-slate-500 hover:text-white focus:outline-none active:bg-slate-600"
                   type="button"
@@ -361,11 +395,35 @@ export default function Assign() {
       </main>
 
       {isSendModalOpen && sendData && (
-        <ModalExtAssign
-          onCloseModal={() => setIsSendModalOpen(false)}
-          status={sendStatus}
-          dataSent={{ ...sendData }}
-        />
+        // <ModalExtAssign
+        //   onCloseModal={() =>
+        //     sendStatus === true ? router.reload() : setIsSendModalOpen(false)
+        //   }
+        //   status={sendStatus}
+        //   dataSent={{ ...sendData }}
+        // />
+        <Modal
+          header="資料傳送"
+          onCloseModal={onCloseModal}
+          actions={[
+            <button
+              key="closeModal"
+              className="rounded border border-solid border-slate-500 bg-transparent px-4 py-2 text-sm font-bold text-slate-500 outline-none transition-all duration-150 ease-linear hover:bg-slate-500 hover:text-white focus:outline-none active:bg-slate-600"
+              type="button"
+              onClick={onCloseModal}
+            >
+              OK
+            </button>,
+          ]}
+        >
+          <center className="block min-w-[325px] py-8">
+            {!sendStatus
+              ? "❌ 失敗"
+              : status === "loading"
+              ? "🔜 傳送中..."
+              : "✅ 成功"}
+          </center>
+        </Modal>
       )}
     </div>
   );

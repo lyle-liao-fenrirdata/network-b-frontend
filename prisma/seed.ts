@@ -8,7 +8,8 @@ async function main() {
     const context: Prisma.hostCreateInput = {
         hostName: 'main host',
         ipAddress,
-        comment: ''
+        comment: '',
+        xApiKey: process.env.PORTAINER_X_API_KEY as string
     }
 
     await prisma.host.upsert({

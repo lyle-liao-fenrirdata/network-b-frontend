@@ -1,4 +1,6 @@
+import { prisma } from '@/prisma/prisma';
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { GetCaptureStatusBody } from './GetCaptureStatus';
 
 export interface PortainerContainer {
     Id: string;
@@ -49,22 +51,62 @@ interface PartialPortainerEndpoint {
     }[];
 }
 
-const X_API_KEY = process.env.PORTAINER_X_API_KEY as string;
+export type GetHostContainerAndStatus = {
+    host: {
+        hostName: string;
+        comment: string;
+        ipAddress: string;
+        id: number;
+    };
+    containers: PortainerContainer[];
+    captureStatus: GetCaptureStatusBody;
+}
 
 export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse<any>
 ) {
-    const { headers, method, query, body } = req;
-    console.log({ method, url: headers["x-invoke-path"], query, body });
+    const { headers, method } = req;
+    console.log({ method, url: headers["x-invoke-path"] });
 
     switch (method) {
         case "GET":
-            try {
-                res.setHeader('Cache-Control', 's-maxage=1');
+            const hosts = await prisma.host.findMany({
+                where: { deletedAt: null },
+                orderBy: { updatedAt: "desc" },
+                select: {
+                    id: true,
+                    hostName: true,
+                    ipAddress: true,
+                    xApiKey: true,
+                    comment: true,
+                }
+            });
 
+            res.setHeader('Cache-Control', 's-maxage=1');
+            const updatedAt = Date.now()
+
+            const results = await Promise.all(hosts.map(async ({
+                hostName,
+                comment,
+                ipAddress,
+                xApiKey,
+                id,
+            }) => {
+                const res: GetHostContainerAndStatus = {
+                    host: {
+                        hostName,
+                        comment,
+                        ipAddress,
+                        id,
+                    },
+                    containers: [],
+                    captureStatus: {
+                        updatedAt,
+                    },
+                }
                 const endpointPath = process.env.PORTAINER_ENDPOINT_PATH || "/api/endpoints";
-                const backendUri = `${process.env.BACKEND_URL}:${process.env.PORTAINER_ENDPOINT_PORT}`;
+                const backendUri = `http://${ipAddress}:${process.env.PORTAINER_ENDPOINT_PORT || '9000'}`;
 
                 const endpointUrl = new URL(endpointPath, backendUri);
                 endpointUrl.searchParams.append("name", process.env.PORTAINER_ENDPOINT_NAME || 'local');
@@ -72,10 +114,10 @@ export default async function handler(
                     mode: "no-cors",
                     cache: "no-store",
                     headers: {
-                        "X-API-Key": X_API_KEY
+                        "X-API-Key": xApiKey
                     },
                 });
-                if (endpointResult.status !== 200) throw new Error(endpointResult.statusText);
+                if (endpointResult.status !== 200) return res;
                 const endpointBody = await endpointResult.json() as PartialPortainerEndpoint[];
 
                 const containerPath = `${endpointPath}/${endpointBody[0]?.Id || "2"}${process.env.PORTAINER_ENDPOINT_ID_CONTAINER_PATH || "/docker/containers/json"}`
@@ -84,23 +126,42 @@ export default async function handler(
                     mode: "no-cors",
                     cache: "no-store",
                     headers: {
-                        "X-API-Key": X_API_KEY,
+                        "X-API-Key": xApiKey,
                     },
                 });
-                if (result.status !== 200) throw new Error(result.statusText);
+                if (result.status !== 200) return res;
                 const body = await result.json() as PortainerContainer[];
 
-                const containers = body
+                res.containers = body
                     .filter((c) => c.Names.some((n) => n.match(/[A-Z]{3}[\d]{11}_[\d]{10}\./)))
                     .sort((a, b) => b.Created - a.Created);
 
-                res.status(200).json(containers);
-                break;
-            } catch (error) {
-                console.error(error);
-                res.status(400).end(String(error));
-                break;
-            }
+
+                // ad
+                const urlGetCaptureStatus = new URL(
+                    process.env.GET_STATUS_PATH || '/GetCaptureStatus',
+                    `http://${ipAddress}:${process.env.BACKEND_PORT || '5001'}`
+                );
+
+                const resultGetCaptureStatus = await fetch(urlGetCaptureStatus, {
+                    method: "POST",
+                    mode: "no-cors",
+                    cache: "no-cache",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({})
+                });
+
+                // if (result.status !== 200) throw new Error(result.statusText);
+                const jsonGetCaptureStatus = await resultGetCaptureStatus.json() as GetCaptureStatusBody;
+                res.captureStatus = { ...jsonGetCaptureStatus, updatedAt }
+
+                return res
+
+            }))
+            res.status(200).json(results);
+            break;
         default:
             res.status(405).end()
     }
