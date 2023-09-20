@@ -12,3 +12,5 @@ services:
       - ./.env.production
     ports:
       - 80:80
+    volumes:
+      - /var/sqlite:/app/sqlite

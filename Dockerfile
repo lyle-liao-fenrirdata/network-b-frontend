@@ -36,6 +36,7 @@ RUN \
   adduser --system --uid 1001 nextjs
 
 COPY --from=builder --link /app/public ./public
+COPY --from=builder --link /app/sqlite ./sqlite
 
 COPY --from=builder --link --chown=1001:1001 /app/.next/standalone ./
 COPY --from=builder --link --chown=1001:1001 /app/.next/static ./.next/static
