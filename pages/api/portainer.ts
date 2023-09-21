@@ -1,6 +1,16 @@
 import { prisma } from '@/prisma/prisma';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { GetCaptureStatusBody } from './GetCaptureStatus';
+
+export interface GetCaptureStatusBody {
+    CRCErrCnt?: number,
+    CRCErrRate?: number,
+    DataCnt?: number,
+    Dump?: string,
+    PacketCnt?: number,
+    ProgramCnt?: number,
+    RecordID?: string
+    updatedAt: number,
+}
 
 export interface PortainerContainer {
     Id: string;

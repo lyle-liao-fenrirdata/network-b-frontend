@@ -1,3 +1,4 @@
+import { prisma } from '@/prisma/prisma';
 import type { NextApiRequest, NextApiResponse } from 'next'
 
 export default async function handler(
@@ -12,10 +13,14 @@ export default async function handler(
       try {
         res.setHeader('Cache-Control', 's-maxage=5');
 
-        const url = new URL(
-          process.env.CAPTURE_COMMAND_PATH || '/CaptureCommand',
-          `${process.env.BACKEND_URL || 'http://192.168.17.31'}:${process.env.BACKEND_PORT || '5001'}`
-        );
+        const ipAddress = query['ipAddress']
+        if (!ipAddress || typeof ipAddress !== 'string') throw new Error('無IP於請求URL中');
+        const xApiKey = await prisma.host.findUnique({ where: { ipAddress, deletedAt: null }, select: { xApiKey: true } })
+        if (!xApiKey) throw new Error('無此IP登錄使用中');
+        const endpointPath = process.env.CAPTURE_COMMAND_PATH || '/CaptureCommand';
+        const backendUri = `http://${ipAddress}:${process.env.BACKEND_PORT || '5001'}`;
+        const url = new URL(endpointPath, backendUri);
+
         const result = await fetch(url, {
           method: "POST",
           mode: "no-cors",

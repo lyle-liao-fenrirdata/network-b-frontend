@@ -27,29 +27,33 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  async function postBackend(containerName: string) {
+  async function postBackend(ipAddress: string, containerName: string) {
     if (isLoading || !containerName.match(/^[A-Z]{3}[\d]{11}_[\d]{10}\./gm))
       return;
     setIsLoading(() => true);
 
     const RecordID = containerName.slice(0, 14);
     const Timestamp = containerName.slice(15, 25);
-    const responses = await fetch("/api/CaptureCommand", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        RecordID,
-        Timestamp,
-        Capture: "Disable",
-      }),
-    });
+    const responses = await fetch(
+      "/api/CaptureCommand?ipAddress=" + ipAddress,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          RecordID,
+          Timestamp,
+          Capture: "Disable",
+        }),
+      }
+    );
 
     if (!responses.ok) {
       const error = await responses.text();
       console.error(error);
       window.alert(error);
+      return;
     }
     getPortainerContainers();
     window.alert(`已成功停用 ${containerName} 的請求`);
@@ -95,7 +99,7 @@ export default function Dashboard() {
                         key="closeModal-confirm"
                         className="w-full rounded bg-transparent px-4 py-2 text-sm font-bold text-slate-500 outline-none transition-all hover:bg-red-500 hover:text-white focus:outline-none active:bg-red-600"
                         type="button"
-                        onClick={() => postBackend(name)}
+                        onClick={() => postBackend(host.ipAddress, name)}
                       >
                         停止
                       </button>

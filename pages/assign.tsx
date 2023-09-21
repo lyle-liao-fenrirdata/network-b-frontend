@@ -2,7 +2,6 @@ import AppLinks from "@/components/AppLinks";
 import AppNavbar from "@/components/AppNavbar";
 import Container from "@/components/Container";
 import SignalInfo from "@/components/SignalInfo";
-import ModalExtAssign from "@/components/app/ModalExtAssign";
 import { RestfullAPI } from "@/fakeData/C_PageData";
 import { prisma } from "@/prisma/prisma";
 import { GetServerSideProps, InferGetServerSidePropsType } from "next";
@@ -45,7 +44,7 @@ export default function Assign({
   hosts,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const router = useRouter();
-  const [ipAddress, setIpAddress] = useState<string>("");
+  const [ipAddress, setIpAddress] = useState<string>(hosts[0]?.ipAddress || "");
   const [inputs, setInputs] = useState<FormInputs>({
     SatelliteID: "",
     Polarization: "",
@@ -255,26 +254,6 @@ export default function Assign({
                   className="relative w-[128px] shrink-0 rounded bg-white px-3 py-2 text-sm text-slate-600 outline-none"
                 />
               </div>
-              {/* backend ip */}
-              <div className="flex w-full flex-row flex-nowrap items-center justify-start gap-2">
-                <span className="min-w-[96px] whitespace-nowrap">服務類型</span>
-                <select
-                  id="ipAddress"
-                  name="ipAddress"
-                  value={ipAddress}
-                  onChange={(e) => setIpAddress(e.target.value)}
-                  className="relative w-full rounded bg-white px-3 py-2 text-sm text-slate-600 placeholder-slate-300 shadow outline-none focus:border-transparent focus:outline-none active:outline-none"
-                >
-                  {hosts.map(({ ipAddress, hostName }) => (
-                    <option key={ipAddress} value={hostName}>
-                      {`${hostName} - ${ipAddress}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            {/* Right Part */}
-            <div className="flex flex-col items-start gap-2">
               {/* Server Type */}
               <div className="flex w-full flex-row flex-nowrap items-center justify-start gap-2">
                 <span className="min-w-[96px] whitespace-nowrap">服務類型</span>
@@ -291,6 +270,9 @@ export default function Assign({
                   <option value="HDLC">HDLC</option>
                 </select>
               </div>
+            </div>
+            {/* Right Part */}
+            <div className="flex flex-col items-start gap-2">
               {/* Timestamp (Unix Time) */}
               {/* <div className="flex w-full flex-row flex-nowrap items-center justify-start gap-2">
                 <span className="min-w-[168px] whitespace-nowrap">
@@ -355,6 +337,25 @@ export default function Assign({
                   onChange={onChange}
                   className="relative w-full rounded bg-white px-3 py-2 text-sm text-slate-600 outline-none"
                 />
+              </div>
+              {/* backend ip */}
+              <div className="flex w-full flex-row flex-nowrap items-center justify-start gap-2">
+                <span className="min-w-[168px] whitespace-nowrap">
+                  側錄服務器IP位址
+                </span>
+                <select
+                  id="ipAddress"
+                  name="ipAddress"
+                  value={ipAddress}
+                  onChange={(e) => setIpAddress(e.target.value)}
+                  className="relative w-full rounded bg-white px-3 py-2 text-sm text-slate-600 placeholder-slate-300 shadow outline-none focus:border-transparent focus:outline-none active:outline-none"
+                >
+                  {hosts.map(({ ipAddress, hostName }) => (
+                    <option key={ipAddress} value={ipAddress}>
+                      {`${hostName} - ${ipAddress}`}
+                    </option>
+                  ))}
+                </select>
               </div>
               {/* action section */}
               <div className="ml-auto mt-auto flex flex-row flex-nowrap items-center justify-start gap-2">

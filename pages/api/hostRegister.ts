@@ -19,9 +19,6 @@ export default async function handler(
     const backendUri = `${ipAddress}:${process.env.PORTAINER_ENDPOINT_PORT || '9000'}`;
     const endpointUrl = new URL(endpointPath, backendUri);
     endpointUrl.searchParams.append("name", process.env.PORTAINER_ENDPOINT_NAME || 'local');
-    console.group()
-    console.dir({ endpointUrl, xApiKey })
-    console.groupEnd()
     const textConnetion = await fetch(endpointUrl, {
       mode: "no-cors",
       cache: "no-store",
