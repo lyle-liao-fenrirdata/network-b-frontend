@@ -16,4 +16,3 @@ services:
       - type: bind
         source: ./sqlite
         target: /app/sqlite
-        rw: true
