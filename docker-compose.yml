@@ -13,4 +13,7 @@ services:
     ports:
       - 80:80
     volumes:
-      - /home/user/frontend/network-b-frontend/sqlite:/app/sqlite
+      - type: bind
+        source: ./sqlite
+        target: /app/sqlite
+        rw: true
