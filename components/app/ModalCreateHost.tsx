@@ -39,9 +39,10 @@ export default function ModalCreateHost({
     if (!ipAddress.match(ipAddressRegex)) error["主機位址"] = "格式不符";
     if (currentIps.some((v) => v === ipAddress)) error["主機位址"] = "重複位置";
     if (!error["主機位址"] && !error["主機 API Key"]) {
-      const testPortainer = await fetch(
-        `/api/hostRegister?ipAddress=http://${ipAddress}&xApiKey=${xApiKey}`
-      );
+      const url = new URL("/api/hostRegister", window.location.origin);
+      url.searchParams.append("ipAddress", "http://" + ipAddress);
+      url.searchParams.append("xApiKey", xApiKey);
+      const testPortainer = await fetch(url);
       if (testPortainer.status !== 200)
         error["主機 API Key"] = "請檢查 ip 或api key, 測試連線失敗!";
     }
